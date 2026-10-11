@@ -1,0 +1,40 @@
+# Per-task agent notes (scratch state, see workflows/taskworkflow.md)
+workflows/tasks/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+docker/.env
+secrets/
+*.pfx
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Generated proposals, synced sources, and local data
+output/
+docstore/
+*.dump
+evals/results/
+
+# Real company documents must never be committed; only sanitized samples
+data/raw/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
