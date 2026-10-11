@@ -27,6 +27,7 @@ Classify the task before doing anything else.
 | **Trivial** | One-line fix, typo, simple read-only answer, rename with obvious verification | No |
 | **Standard** | New endpoint, parser change, UI screen, installer stage, refactor across files | Yes |
 | **Accuracy-sensitive** | Anything under `src/catering_agent/rules/`, `catalog/`, `intake/`, `proposal/`, `render/`, `llm/prompts/`, `data/rules/`, `evals/golden/`, or any change to how a price, menu item, venue fact, regional policy, locale, or quantity reaches a proposal | Yes, and the golden evaluation is mandatory (§5) |
+| **Customer-facing / deployment** | Dedicated-client hosting, remote access, authentication boundaries, the Catering Enquiry Assistant, public forms, or PWA/mobile delivery | Yes, and security/privacy validation is mandatory |
 | **Destructive / environment** | Installer Reset path, data migrations, backup cleanup, compaction, deleting catalog versions | Yes, and must follow the disposable-VM rules in `AGENTS.md` §18 |
 
 When a task needs a workspace, derive a short kebab-case slug (for example
@@ -89,6 +90,12 @@ Record in `00-brief.md`:
   remain unaffected;
 - whether data, compatibility, security, Microsoft 365 permissions, LLM
   provider behavior, installation, or destructive actions are involved;
+- for delivery-channel work, whether the change affects the dedicated-client
+  isolation boundary, a public/customer route, authentication/authorization,
+  HTTPS, consent/PII handling, rate limiting, abuse prevention, or backups;
+- whether the work belongs to the internal proposal portal or the future
+  Catering Enquiry Assistant, and which actions the user must never be able
+  to invoke; and
 - which catalog version, prompt version, or golden cases the change is
   expected to affect, and which it must not affect; and
 - relevant pre-existing worktree changes that must be preserved.
@@ -127,6 +134,10 @@ During exploration:
   pattern;
 - trace provenance: for any value that reaches a proposal, find where it is
   sourced and confirm the change preserves its `source_ref`;
+- for customer-facing or remote-deployment work, trace the trust boundary from
+  the public route through the API, agent tools, data stores, and external
+  adapters. Confirm that public access cannot reach reviewer-only actions,
+  pricing, proposal rendering, approval, export, or source management;
 - distinguish generated files (Alembic autogenerate output, rendered DOCX/PDF,
   embeddings, `uv.lock`) from source files;
 - identify existing user changes and avoid overwriting or reverting them;
@@ -220,6 +231,11 @@ Rules that apply during execution:
   `EventBrief`, choose among candidate IDs supplied by deterministic code, or
   draft clearly marked narrative text. It may not produce prices, quantities,
   menu item text, or venue facts.
+- **Customer enquiry channels are intake-only.** The Catering Enquiry
+  Assistant may gather event details and present only a clearly non-binding
+  submitted-enquiry summary or approved general guidance. It cannot quote,
+  confirm availability, issue a proposal, make an execution commitment, or
+  invoke reviewer, pricing, approval, export, or source-management actions.
 - **Live LLM calls cost money and are non-deterministic.** Default to recorded
   responses in tests; run `-m live` tests or live evals only when the phase
   requires it, and record the model ID and prompt version used.
@@ -301,12 +317,18 @@ Before declaring completion:
    currency/date/number rendering, and an unsupported or ambiguous
    jurisdiction. Confirm no record from one region is eligible in another
    without an explicit approved mapping.
-7. Confirm documentation, configuration, `.env.example`, and prompt versions
+7. For customer-facing or remote dedicated-deployment work, verify HTTPS and
+   authorization at the deployed boundary; test rate limiting/abuse handling,
+   consent and PII redaction, and direct/indirect attempts to invoke internal
+   pricing, proposal, approval, export, or source-management routes. Confirm
+   that client isolation is preserved for application data, source adapters,
+   identity, and backups.
+8. Confirm documentation, configuration, `.env.example`, and prompt versions
    match the actual behavior.
-8. Record each acceptance criterion in `05-validation.md` as `Passed`,
+9. Record each acceptance criterion in `05-validation.md` as `Passed`,
    `Partial`, `Pending`, or `Not applicable`, with evidence (command plus
    result, or the observed UI behavior).
-9. Record any unrun checks and why they were not run (for example: "live
+10. Record any unrun checks and why they were not run (for example: "live
    Graph upload not run, no tenant credentials in this session").
 
 Never weaken, delete, skip, or re-record a failing test or golden expectation
@@ -336,6 +358,7 @@ navigable:
 | `TS-PROPOSAL` | Proposal assembly, provenance enforcement, numeric-leak guard |
 | `TS-RENDER` | DOCX template filling, PDF conversion, no leftover placeholders |
 | `TS-REVIEW` | Reviewer UI, overrides with reasons, approval, audit trail |
+| `TS-ENQUIRY` | Catering Enquiry Assistant intake, clarification, non-binding output, public-to-internal authorization boundary, consent, and abuse handling |
 | `TS-M365` | Graph authentication, source sync, draft/approved export |
 | `TS-REGION` | Regional specification selection, jurisdiction boundaries, locale-aware rendering, regional policy isolation |
 | `TS-INSTALL` | Installer state machine, pre-flight, feature enablement, resume/repair/reset |
@@ -386,6 +409,8 @@ it addresses:
   reasons, approves, exports.
 - **Installing administrator**: runs the installer, configures Microsoft 365
   and the LLM provider, manages backups and catalog refreshes.
+- **Event enquirer (future)**: uses the Catering Enquiry Assistant to submit
+  event requirements; receives only a non-binding acknowledgement or summary.
 
 Use the task file as a reviewed draft during the task. Before completion, move
 lasting instructions into `docs/user-manual/` (one file per audience or
@@ -451,6 +476,11 @@ decision or validation evidence exists only in scratch.
 - Global does not mean generic facts: every recommendation is constrained by
   the selected, approved `RegionalSpecification`; the system must not infer
   culture, law, taxes, cuisine, language, or currency from geography or prose.
+- The dedicated client deployment is the product boundary: never introduce a
+  shared cross-client data store or multi-tenant behavior without explicit
+  maintainer sign-off and a security design. Treat the Catering Enquiry
+  Assistant as a separate public trust boundary, never as a shortcut into the
+  internal proposal portal.
 - Every value in a proposal must trace to an approved source (`source_ref`) or
   to a reviewer override with a recorded reason.
 - Keep business logic deterministic and testable; confine the LLM to

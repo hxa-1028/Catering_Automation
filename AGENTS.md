@@ -77,6 +77,30 @@ The first deliverable is a **proof of concept** on a limited dataset:
 system will be expanded to the full venue/menu/pricing library and production
 sales workflows.
 
+#### Client delivery model and channels
+
+The intended client offering is a **dedicated client deployment**: each
+customer organization receives an isolated application deployment, database,
+catalog, source connection, identity configuration, and backup boundary.
+Multi-tenant SaaS and shared cross-client data stores are not the target
+delivery model.
+
+The initial client-facing product is the authenticated **internal proposal
+portal** for the customer's sales and review team. The Windows/Docker,
+localhost-only prototype remains the first proof-of-concept deployment; a
+remote production deployment is a later, separately security-reviewed
+implementation. Selecting dedicated delivery does not authorize public
+exposure of the prototype.
+
+A future public intake channel is named the **Catering Enquiry Assistant**.
+It is a separate, customer-facing trust boundary that may ask approved event
+intake questions and return a clearly non-binding acknowledgement or summary.
+It creates an enquiry for the internal team; it never issues a proposal,
+quotes a price, confirms availability, promises an event outcome, approves a
+proposal, or gains reviewer/source-system privileges. PWA and native Android
+or iOS applications are future work; the web portal is the initial delivery
+channel.
+
 #### Global and regional configuration contract
 
 Every customer organization configures one or more versioned
@@ -115,6 +139,7 @@ menu items.
 | **Reviewer / approver** | Often the same salesperson or a sales lead; checks every line item against its source, records overrides, approves | As above; owns the business accuracy of the final proposal |
 | **Installing administrator** | Office IT person or the developer; installs the system and configures source/identity adapters, regional specifications, and the LLM provider | Can follow a wizard and supported-language instructions; cannot debug Docker/WSL internals |
 | **Regional content owner** | Maintains the pricing workbooks, menus, templates, translations, and regional policy sources for a supported location | Business user; must never be asked to edit data in a format other than their existing Word/Excel files |
+| **Event enquirer (future)** | A prospective customer using the Catering Enquiry Assistant to submit an event enquiry | General web user; receives only non-binding, approved intake guidance and a submitted-enquiry summary |
 
 ### 1-C. Platform
 
@@ -123,6 +148,10 @@ menu items.
   phase. Developers may run the Python app natively on any OS for development.
 - **Runtime:** Docker Desktop with the WSL2 backend. The host never gets
   Python, PostgreSQL, or LibreOffice installed directly.
+- **Dedicated deployment direction:** the current local-only deployment is a
+  proof of concept. Each future production deployment is isolated for one
+  client; remote access and the public Catering Enquiry Assistant require a
+  separate security-reviewed deployment design.
 - **Access:** the reviewer UI is a web app at `http://127.0.0.1:8080`, which
   is localhost only in v1 (see §16).
 - **Business systems:** the core uses a source-storage and identity abstraction.
@@ -207,6 +236,7 @@ information.** That requirement translates into these engineering rules:
 | `PriceListItem` | `sku`, `region_spec_id`, localized `description`, `unit` (`per_guest`, `per_item`, `per_hour`, `flat`), `unit_price` (`Decimal`), ISO 4217 `currency`, `min_qty`, `valid_from`/`valid_to`, `source_ref` |
 | `BusinessRule` | `rule_id`, `region_spec_id`, `description`, `parameters` (from data), `effective_from`/`effective_to`, `source_ref`, implementation function in `rules/` |
 | `EventBrief` | `client_name`, `client_contact`, `event_date`, `event_location`, `region_spec_id`, `venue_id`, `guest_count`, `event_type`, `service_style[]`, `preferred_language`, `menu_preferences`, `dietary_requirements`, `other_requirements`, per-field `confidence` and `evidence_span` |
+| `EnquirySubmission` | `enquiry_id`, submitted intake text/fields, consent and contact data, selected/confirmed regional context when available, `needs_input[]`, provenance of extracted fields, source channel, and audit timestamps; it is not a proposal or approval record |
 | `Proposal` | `proposal_id`, `status`, `brief`, `regional_specification`, `line_items[]`, `totals`, `warnings[]`, `needs_input[]`, `overrides[]`, pinned versions, `docx_path`, `pdf_path` |
 | `CatalogVersion` | `catalog_version` (timestamp ID), source file hashes, validation report, `is_active` |
 
@@ -255,6 +285,11 @@ compute prices, choose a region, or write to external systems. Each LLM step
 has a maximum iteration count, a timeout, and a deterministic fallback (ask
 the user).
 
+The constrained agent runs in the application backend. The internal proposal
+portal invokes the full draft pipeline; the future Catering Enquiry Assistant
+may invoke only the bounded intake and clarification portion. It cannot invoke
+pricing, proposal rendering, approval, export, or source-management actions.
+
 #### Proposal lifecycle
 
 ```
@@ -282,6 +317,18 @@ transition is written to `audit_events` (who, when, from, to, reason).
   reason**, is attributed to the signed-in user, and is stored on the proposal
   only. Overrides are never written back to source data.
 - Offers DOCX/PDF preview, Approve, Request changes, and Cancel.
+
+#### Catering Enquiry Assistant (future customer-facing channel)
+
+The Catering Enquiry Assistant is a public enquiry-intake experience, not a
+customer self-service proposal engine. It collects the information needed for
+an `EventBrief`, requests clarification for missing or ambiguous answers, and
+creates an `EnquirySubmission` for the internal portal. Any customer-visible
+summary is labelled non-binding and is limited to the submitted information
+and approved general guidance. It must not expose internal catalog data,
+source links, reviewer identities, proposal drafts, prices, totals, menu
+commitments, venue availability, or execution commitments. A salesperson
+reviews each enquiry before it enters the proposal lifecycle.
 
 #### Ingestion
 
@@ -328,7 +375,7 @@ transition is written to `audit_events` (who, when, from, to, reason).
 |---|---|---|
 | Language | **Python 3.12** | Best ecosystem for LLM SDKs, Office file parsing, and data work; named in the client brief |
 | Packaging | **uv** (`pyproject.toml` + `uv.lock`) | Fast, reproducible, single tool for venv/lock/run |
-| Web/API | **FastAPI** + **Jinja2 + HTMX** for the reviewer UI | One Python stack, no Node build chain; good enough for an internal review UI |
+| Web/API | **FastAPI** + **Jinja2 + HTMX** for the internal proposal portal | One Python stack, no Node build chain; supports the reviewer UI now and a separately bounded enquiry UI later |
 | Data models | **Pydantic v2** | Schema-constrained LLM outputs and API validation share the same models |
 | Database | **PostgreSQL 16 + pgvector** (`pgvector/pgvector:pg16`, pinned digest) | Relational tables for structured catalog data plus vector and full-text search for narrative documents, in one store |
 | ORM / migrations | **SQLAlchemy 2.x** + **Alembic** | Mature, typed, explicit migrations |
@@ -860,6 +907,14 @@ proposal's immutable generation context.
 - [ ] Source documents are never modified by the system. No source adapter
       has a code path that writes to an approved source library.
 
+For any future remote dedicated deployment or Catering Enquiry Assistant
+release, the security review additionally verifies HTTPS, separate public and
+reviewer route authorization, rate limiting and abuse protection, consent and
+privacy notices for submitted PII, client-isolated infrastructure and backup
+access, and a test proving the public channel cannot reach pricing, proposal,
+approval, export, or source-management actions. These requirements do not
+authorize public exposure of the localhost prototype.
+
 ---
 
 ## 11. Docker Compose Requirements
@@ -1070,7 +1125,11 @@ who did what. Logs are for diagnostics.
 - LAN, remote, or internet exposure of the reviewer UI, and HTTPS. v1 binds
   to `127.0.0.1` over plain HTTP. LAN access requires HTTPS plus a firewall
   review first.
-- Cloud deployment (Azure Container Apps, App Service, etc.).
+- Multi-tenant SaaS deployment or any shared cross-client database, catalog,
+  identity, or backup boundary.
+- PWA packaging, native Android/iOS applications, and App Store or Google
+  Play distribution. The responsive web portal is the current delivery
+  channel.
 - Fine-tuning or training models on company data.
 - Enabling a country, subdivision, language, currency, or jurisdiction without
   an approved `RegionalSpecification`, regional source data, templates, policy
