@@ -1,0 +1,148 @@
+name: catering
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg16-bookworm@sha256:a97d77306ff47cc1d8add4d000cec2207da2e110746318df3137ce53c337ca30
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: catering
+      POSTGRES_USER: catering
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - catering_db_data:/var/lib/postgresql/data
+    networks:
+      - catering_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catering -d catering -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: catering-app:0.1.0
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    environment:
+      CATERING_APP_ENV: production
+      CATERING_DATABASE_HOST: db
+      CATERING_DATABASE_PORT: 5432
+      CATERING_DATABASE_NAME: catering
+      CATERING_DATABASE_USER: catering
+      CATERING_DB_PASSWORD_SECRET_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - catering_net
+    restart: "no"
+
+  app:
+    image: catering-app:0.1.0
+    command:
+      [
+        "uvicorn",
+        "catering_agent.api.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8080",
+      ]
+    environment:
+      CATERING_APP_ENV: production
+      CATERING_APP_PORT: 8080
+      CATERING_DATABASE_HOST: db
+      CATERING_DATABASE_PORT: 5432
+      CATERING_DATABASE_NAME: catering
+      CATERING_DATABASE_USER: catering
+      CATERING_DB_PASSWORD_SECRET_FILE: /run/secrets/db_password
+      CATERING_LLM_API_KEY_SECRET_FILE: /run/secrets/llm_api_key
+      CATERING_GOTENBERG_URL: http://docconv:3000
+    secrets:
+      - db_password
+      - llm_api_key
+    volumes:
+      - catering_docstore:/data/docstore
+    ports:
+      - "127.0.0.1:${APP_PORT}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      docconv:
+        condition: service_healthy
+    networks:
+      - catering_net
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"from urllib.request import urlopen; response = urlopen('http://127.0.0.1:8080/readyz', timeout=2); raise SystemExit(0 if response.status == 200 else 1)\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  worker:
+    image: catering-app:0.1.0
+    command: ["python", "-m", "catering_agent.jobs.worker"]
+    environment:
+      CATERING_APP_ENV: production
+      CATERING_DATABASE_HOST: db
+      CATERING_DATABASE_PORT: 5432
+      CATERING_DATABASE_NAME: catering
+      CATERING_DATABASE_USER: catering
+      CATERING_DB_PASSWORD_SECRET_FILE: /run/secrets/db_password
+      CATERING_LLM_API_KEY_SECRET_FILE: /run/secrets/llm_api_key
+      CATERING_GOTENBERG_URL: http://docconv:3000
+    secrets:
+      - db_password
+      - llm_api_key
+    volumes:
+      - catering_docstore:/data/docstore
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      docconv:
+        condition: service_healthy
+    networks:
+      - catering_net
+    restart: unless-stopped
+
+  docconv:
+    image: gotenberg/gotenberg:8.38.1@sha256:07c8c65ab901d0a94a6a683c355d55a8c9d45504eb680f43d38daa3361abfc38
+    platform: linux/amd64
+    networks:
+      - catering_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+networks:
+  catering_net:
+    name: catering_net
+    driver: bridge
+
+volumes:
+  catering_db_data:
+    name: catering_db_data
+  catering_docstore:
+    name: catering_docstore
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
+  llm_api_key:
+    file: ./secrets/llm_api_key
