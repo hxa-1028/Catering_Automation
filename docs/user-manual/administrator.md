@@ -18,7 +18,7 @@ restricted to the installing user:
 Start the services with:
 
 ```powershell
-docker compose -f docker/docker-compose.yml up -d --build
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d --build
 ```
 
 The app is available only at `http://127.0.0.1:8080`. `GET /healthz` confirms

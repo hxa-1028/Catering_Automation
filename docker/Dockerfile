@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir "uv==0.13.0" \
 
 WORKDIR /app
 
+RUN chown app:app /app
+
 COPY --chown=app:app pyproject.toml uv.lock README.md ./
 
 USER app

@@ -60,7 +60,7 @@ and Gotenberg have no host ports.
 3. Start the runtime from the repository root:
 
    ```powershell
-   docker compose -f docker/docker-compose.yml up -d --build
+   docker compose --env-file docker/.env -f docker/docker-compose.yml up -d --build
    ```
 
 The `migrate` service must complete successfully before the app and worker can

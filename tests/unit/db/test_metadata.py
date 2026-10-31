@@ -4,6 +4,7 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 
 from catering_agent.db import models  # noqa: F401
+from catering_agent.db.alembic_config import escape_configparser_value
 from catering_agent.db.base import Base
 
 ROOT = Path(__file__).parents[3]
@@ -79,3 +80,12 @@ def test_initial_migration_creates_pgvector_and_has_a_downgrade() -> None:
     assert "CREATE EXTENSION IF NOT EXISTS vector" in migration_text
     assert "def downgrade()" in migration_text
     assert "DROP EXTENSION IF EXISTS vector" in migration_text
+
+
+def test_percent_encoded_database_url_survives_alembic_config_parsing() -> None:
+    database_url = "postgresql+psycopg://catering:example%3Dpassword@db:5432/catering"
+    config = Config()
+
+    config.set_main_option("sqlalchemy.url", escape_configparser_value(database_url))
+
+    assert config.get_main_option("sqlalchemy.url") == database_url
