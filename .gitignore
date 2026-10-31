@@ -6,6 +6,7 @@ workflows/tasks/
 .env.*
 !.env.example
 docker/.env
+docker/secrets/
 secrets/
 *.pfx
 *.pem

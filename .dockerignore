@@ -1,0 +1,17 @@
+.git/
+.env
+.env.*
+!.env.example
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+docker/.env
+docker/secrets/
+workflows/tasks/
+data/raw/
+docstore/
+output/
+evals/results/

@@ -10,6 +10,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 import catering_agent.db.models  # noqa: F401
+from catering_agent.config import get_settings
 from catering_agent.db.base import Base
 
 config = context.config
@@ -22,8 +23,10 @@ target_metadata = Base.metadata
 
 def _configure_database_url() -> None:
     command_options = context.get_x_argument(as_dictionary=True)
-    database_url = command_options.get("database_url") or os.environ.get(
-        "CATERING_DATABASE_URL"
+    database_url = (
+        command_options.get("database_url")
+        or os.environ.get("CATERING_DATABASE_URL")
+        or get_settings().resolved_database_url()
     )
     if database_url is None:
         raise RuntimeError(
