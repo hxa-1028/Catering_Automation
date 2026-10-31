@@ -50,3 +50,11 @@ def test_administrator_commands_explicitly_load_the_docker_environment_file() ->
 
     assert command in readme
     assert command in administrator_guide
+
+
+def test_worker_has_read_only_access_to_local_development_sources() -> None:
+    compose = (REPOSITORY_ROOT / "docker" / "docker-compose.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "- ../data:/app/data:ro" in compose

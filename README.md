@@ -6,10 +6,10 @@ venue requirements, or other business facts.
 
 ## Current status
 
-Phases 1–3 establish the Python foundation, source-backed database schema, and
-local-only five-service Docker runtime. The runtime deliberately remains
-unready until a later ingestion phase activates an approved catalog version.
-It does not yet contain catalog data, pricing, LLM calls, proposal generation,
+Phases 1–4 establish the Python foundation, source-backed database schema,
+local-only five-service Docker runtime, and strict local catalog ingestion.
+The bundled catalog is synthetic prototype data only; it is not client-ready
+content. The product does not yet contain LLM calls, proposal generation,
 customer enquiry routes, or installer automation.
 
 The product will be delivered as a dedicated, isolated deployment for each
@@ -64,5 +64,12 @@ and Gotenberg have no host ports.
    ```
 
 The `migrate` service must complete successfully before the app and worker can
-start. Until a catalog is ingested and activated, `/readyz` correctly returns
-HTTP 503 even if all containers are otherwise running.
+start. Activate the bundled synthetic test catalog only for local verification:
+
+```powershell
+docker compose --env-file docker/.env -f docker/docker-compose.yml run --rm worker python -m catering_agent.knowledge.ingest --source local --path /app/data/samples
+```
+
+After a valid catalog is activated, `/readyz` returns HTTP 200. Never use the
+bundled sample as business data; real client source files must be approved,
+declared, and ingested through their supported adapter.

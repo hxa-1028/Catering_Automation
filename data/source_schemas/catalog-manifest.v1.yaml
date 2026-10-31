@@ -1,0 +1,25 @@
+# Development-only declared schema for the local catalog adapter.
+# Real client workbooks and documents remain read-only approved sources and
+# require their own declared schemas before they can be ingested.
+schema_version: 1
+source: catalog.json
+required_top_level_keys:
+  - catalog_version
+  - regional_specifications
+  - venues
+  - menus
+  - menu_items
+  - price_list_items
+  - business_rules
+provenance:
+  provider: local_filesystem
+  content_hash: sha256
+  record_location: section_and_paragraph
+price_list_items:
+  unit_price:
+    amount: decimal_string
+    currency: iso_4217
+  duplicate_key:
+    - sku
+    - region_spec_id
+    - region_spec_version
