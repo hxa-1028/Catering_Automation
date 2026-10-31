@@ -108,6 +108,7 @@ services:
       - llm_api_key
     volumes:
       - catering_docstore:/data/docstore
+      - ../data:/app/data:ro
     depends_on:
       migrate:
         condition: service_completed_successfully

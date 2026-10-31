@@ -1,0 +1,245 @@
+{
+  "catalog_version": "sample-2026-11-01",
+  "regional_specifications": [
+    {
+      "region_spec_id": "sample-us-west",
+      "version": "1",
+      "country_code": "US",
+      "subdivision_code": "US-CA",
+      "locality": "Sample City",
+      "tax_jurisdiction_ids": ["sample-city"],
+      "timezone": "America/Los_Angeles",
+      "locale": "en-US",
+      "supported_document_languages": ["en-US"],
+      "currency": "USD",
+      "formatting_rules": {"decimal_separator": ".", "group_separator": ","},
+      "regional_policy_version": "sample-policy-1",
+      "rules_version": "sample-rules-1",
+      "effective_window": {"effective_from": "2026-01-01"}
+    }
+  ],
+  "venues": [
+    {
+      "venue_id": "sample-harbor-hall",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "display_name": "Sample Harbor Hall",
+      "aliases": ["Harbor Hall"],
+      "location_jurisdiction_ids": ["sample-city"],
+      "capacity_by_service_style": {"seated": 120, "reception": 180},
+      "template_id": "sample-harbor-template",
+      "required_fee_skus": ["sample-venue-fee"],
+      "restrictions": ["Synthetic prototype record"]
+    },
+    {
+      "venue_id": "sample-garden-room",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "display_name": "Sample Garden Room",
+      "aliases": ["Garden Room"],
+      "location_jurisdiction_ids": ["sample-city"],
+      "capacity_by_service_style": {"seated": 60, "reception": 90},
+      "template_id": "sample-garden-template",
+      "required_fee_skus": [],
+      "restrictions": ["Synthetic prototype record"]
+    },
+    {
+      "venue_id": "sample-studio-loft",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "display_name": "Sample Studio Loft",
+      "aliases": ["Studio Loft"],
+      "location_jurisdiction_ids": ["sample-city"],
+      "capacity_by_service_style": {"seated": 80, "reception": 110},
+      "template_id": "sample-loft-template",
+      "required_fee_skus": [],
+      "restrictions": ["Synthetic prototype record"]
+    }
+  ],
+  "menus": [
+    {
+      "menu_id": "sample-breakfast",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "name": "Sample Breakfast",
+      "localized_content": {"en-US": {"title": "Sample Breakfast"}},
+      "effective_window": {"effective_from": "2026-01-01"},
+      "event_types": ["corporate"],
+      "service_styles": ["buffet"],
+      "venue_ids": ["sample-harbor-hall", "sample-garden-room"],
+      "sections": ["main"]
+    },
+    {
+      "menu_id": "sample-lunch",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "name": "Sample Lunch",
+      "localized_content": {"en-US": {"title": "Sample Lunch"}},
+      "effective_window": {"effective_from": "2026-01-01"},
+      "event_types": ["corporate"],
+      "service_styles": ["buffet"],
+      "venue_ids": null,
+      "sections": ["main"]
+    },
+    {
+      "menu_id": "sample-dinner",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "name": "Sample Dinner",
+      "localized_content": {"en-US": {"title": "Sample Dinner"}},
+      "effective_window": {"effective_from": "2026-01-01"},
+      "event_types": ["wedding"],
+      "service_styles": ["seated"],
+      "venue_ids": ["sample-harbor-hall", "sample-studio-loft"],
+      "sections": ["main"]
+    },
+    {
+      "menu_id": "sample-reception",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "name": "Sample Reception",
+      "localized_content": {"en-US": {"title": "Sample Reception"}},
+      "effective_window": {"effective_from": "2026-01-01"},
+      "event_types": ["wedding", "corporate"],
+      "service_styles": ["reception"],
+      "venue_ids": null,
+      "sections": ["main"]
+    },
+    {
+      "menu_id": "sample-station",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "name": "Sample Station",
+      "localized_content": {"en-US": {"title": "Sample Station"}},
+      "effective_window": {"effective_from": "2026-01-01"},
+      "event_types": ["wedding", "corporate"],
+      "service_styles": ["station"],
+      "venue_ids": ["sample-studio-loft"],
+      "sections": ["main"]
+    }
+  ],
+  "menu_items": [
+    {
+      "item_id": "sample-breakfast-item",
+      "menu_id": "sample-breakfast",
+      "locale": "en-US",
+      "section": "main",
+      "name": "Sample Breakfast Item",
+      "description": "Synthetic menu content.",
+      "dietary_tags": [],
+      "allergen_tags": [],
+      "price_basis": "per_guest"
+    },
+    {
+      "item_id": "sample-lunch-item",
+      "menu_id": "sample-lunch",
+      "locale": "en-US",
+      "section": "main",
+      "name": "Sample Lunch Item",
+      "description": "Synthetic menu content.",
+      "dietary_tags": [],
+      "allergen_tags": [],
+      "price_basis": "per_guest"
+    },
+    {
+      "item_id": "sample-dinner-item",
+      "menu_id": "sample-dinner",
+      "locale": "en-US",
+      "section": "main",
+      "name": "Sample Dinner Item",
+      "description": "Synthetic menu content.",
+      "dietary_tags": [],
+      "allergen_tags": [],
+      "price_basis": "per_guest"
+    },
+    {
+      "item_id": "sample-reception-item",
+      "menu_id": "sample-reception",
+      "locale": "en-US",
+      "section": "main",
+      "name": "Sample Reception Item",
+      "description": "Synthetic menu content.",
+      "dietary_tags": [],
+      "allergen_tags": [],
+      "price_basis": "per_guest"
+    },
+    {
+      "item_id": "sample-station-item",
+      "menu_id": "sample-station",
+      "locale": "en-US",
+      "section": "main",
+      "name": "Sample Station Item",
+      "description": "Synthetic menu content.",
+      "dietary_tags": [],
+      "allergen_tags": [],
+      "price_basis": "per_guest"
+    }
+  ],
+  "price_list_items": [
+    {
+      "sku": "sample-venue-fee",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "locale": "en-US",
+      "description": "Synthetic venue fee",
+      "unit": "flat",
+      "unit_price": {"amount": "100.00", "currency": "USD"},
+      "min_qty": "1",
+      "effective_window": {"effective_from": "2026-01-01"}
+    },
+    {
+      "sku": "sample-breakfast-service",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "locale": "en-US",
+      "description": "Synthetic breakfast service",
+      "unit": "per_guest",
+      "unit_price": {"amount": "20.00", "currency": "USD"},
+      "min_qty": "1",
+      "effective_window": {"effective_from": "2026-01-01"}
+    },
+    {
+      "sku": "sample-lunch-service",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "locale": "en-US",
+      "description": "Synthetic lunch service",
+      "unit": "per_guest",
+      "unit_price": {"amount": "30.00", "currency": "USD"},
+      "min_qty": "1",
+      "effective_window": {"effective_from": "2026-01-01"}
+    },
+    {
+      "sku": "sample-dinner-service",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "locale": "en-US",
+      "description": "Synthetic dinner service",
+      "unit": "per_guest",
+      "unit_price": {"amount": "45.00", "currency": "USD"},
+      "min_qty": "1",
+      "effective_window": {"effective_from": "2026-01-01"}
+    },
+    {
+      "sku": "sample-reception-service",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "locale": "en-US",
+      "description": "Synthetic reception service",
+      "unit": "per_guest",
+      "unit_price": {"amount": "35.00", "currency": "USD"},
+      "min_qty": "1",
+      "effective_window": {"effective_from": "2026-01-01"}
+    }
+  ],
+  "business_rules": [
+    {
+      "rule_id": "sample-prototype-rule",
+      "region_spec_id": "sample-us-west",
+      "region_spec_version": "1",
+      "description": "Synthetic rule metadata with no pricing implementation.",
+      "parameters": {"data_classification": "synthetic"},
+      "effective_window": {"effective_from": "2026-01-01"}
+    }
+  ]
+}

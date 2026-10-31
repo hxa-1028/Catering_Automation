@@ -103,6 +103,9 @@ class VenueRecord(Base):
     __tablename__ = "venues"
 
     venue_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    catalog_version: Mapped[str] = mapped_column(
+        ForeignKey("catalog_versions.catalog_version"), primary_key=True
+    )
     region_spec_id: Mapped[str] = mapped_column(String(128), nullable=False)
     region_spec_version: Mapped[str] = mapped_column(String(128), nullable=False)
     display_name: Mapped[str] = mapped_column(String(256), nullable=False)
@@ -135,6 +138,9 @@ class MenuRecord(Base):
     __tablename__ = "menus"
 
     menu_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    catalog_version: Mapped[str] = mapped_column(
+        ForeignKey("catalog_versions.catalog_version"), primary_key=True
+    )
     region_spec_id: Mapped[str] = mapped_column(String(128), nullable=False)
     region_spec_version: Mapped[str] = mapped_column(String(128), nullable=False)
     name: Mapped[str] = mapped_column(String(256), nullable=False)
@@ -172,7 +178,10 @@ class MenuItemRecord(Base):
     __tablename__ = "menu_items"
 
     item_id: Mapped[str] = mapped_column(String(128), primary_key=True)
-    menu_id: Mapped[str] = mapped_column(ForeignKey("menus.menu_id"), nullable=False)
+    catalog_version: Mapped[str] = mapped_column(
+        ForeignKey("catalog_versions.catalog_version"), primary_key=True
+    )
+    menu_id: Mapped[str] = mapped_column(String(128), nullable=False)
     locale: Mapped[str] = mapped_column(String(64), nullable=False)
     section: Mapped[str] = mapped_column(String(256), nullable=False)
     name: Mapped[str] = mapped_column(String(256), nullable=False)
@@ -184,6 +193,13 @@ class MenuItemRecord(Base):
         ForeignKey("source_references.source_ref_id"), nullable=False
     )
 
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["menu_id", "catalog_version"],
+            ["menus.menu_id", "menus.catalog_version"],
+        ),
+    )
+
 
 class PriceListItemRecord(Base):
     """A Decimal-compatible source price that is never calculated by the LLM."""
@@ -193,6 +209,9 @@ class PriceListItemRecord(Base):
     sku: Mapped[str] = mapped_column(String(128), primary_key=True)
     region_spec_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     region_spec_version: Mapped[str] = mapped_column(String(128), primary_key=True)
+    catalog_version: Mapped[str] = mapped_column(
+        ForeignKey("catalog_versions.catalog_version"), primary_key=True
+    )
     locale: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(String(256), nullable=False)
     unit: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -229,6 +248,9 @@ class BusinessRuleRecord(Base):
     rule_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     region_spec_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     region_spec_version: Mapped[str] = mapped_column(String(128), primary_key=True)
+    catalog_version: Mapped[str] = mapped_column(
+        ForeignKey("catalog_versions.catalog_version"), primary_key=True
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     parameters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     effective_from: Mapped[date] = mapped_column(Date, nullable=False)

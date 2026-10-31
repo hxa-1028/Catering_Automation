@@ -24,9 +24,25 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml up -d --build
 The app is available only at `http://127.0.0.1:8080`. `GET /healthz` confirms
 that its process is running. `GET /readyz` confirms the database, migration
 head, pgvector extension, document converter, file secrets, and active catalog
-version. It will remain `503` until an approved catalog has been ingested in a
-later phase; this is expected and prevents the system from representing an
-unsourced catalog as usable.
+version. It will remain `503` until an approved catalog has been ingested;
+this prevents the system from representing an unsourced catalog as usable.
+
+## Local prototype catalog ingestion
+
+The repository includes a fictitious, sanitized catalog solely to verify the
+local ingestion path. It is not approved client content and must never be used
+to create a client proposal.
+
+After the services are running, validate and activate that prototype catalog:
+
+```powershell
+docker compose --env-file docker/.env -f docker/docker-compose.yml run --rm worker python -m catering_agent.knowledge.ingest --source local --path /app/data/samples
+```
+
+The command validates every record, records the file hash and source location,
+and activates the entire version in one database transaction. If validation
+fails, it leaves the active catalog unchanged. Confirm readiness afterward at
+`http://127.0.0.1:8080/readyz`.
 
 Do not publish database or document-converter ports, move secret values into
 environment files, or treat this local prototype as remote production hosting.

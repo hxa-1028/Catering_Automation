@@ -48,21 +48,51 @@ def test_source_backed_records_reference_source_references() -> None:
 
 
 def test_region_scoped_price_and_rule_keys_do_not_collide_globally() -> None:
-    expected_primary_keys = {"sku", "region_spec_id", "region_spec_version"}
+    expected_primary_keys = {
+        "sku",
+        "region_spec_id",
+        "region_spec_version",
+        "catalog_version",
+    }
     assert {
         column.name for column in Base.metadata.tables["price_list_items"].primary_key
     } == expected_primary_keys
 
     assert {
         column.name for column in Base.metadata.tables["business_rules"].primary_key
-    } == {"rule_id", "region_spec_id", "region_spec_version"}
+    } == {"rule_id", "region_spec_id", "region_spec_version", "catalog_version"}
 
 
 def test_alembic_initial_revision_is_the_current_head() -> None:
     config = Config(str(ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_current_head() == "20261019_0001"
+    assert script_directory.get_current_head() == "20261101_0002"
+
+
+def test_catalog_records_are_keyed_by_immutable_catalog_version() -> None:
+    expected_keys = {
+        "venues": {"venue_id", "catalog_version"},
+        "menus": {"menu_id", "catalog_version"},
+        "menu_items": {"item_id", "catalog_version"},
+        "price_list_items": {
+            "sku",
+            "region_spec_id",
+            "region_spec_version",
+            "catalog_version",
+        },
+        "business_rules": {
+            "rule_id",
+            "region_spec_id",
+            "region_spec_version",
+            "catalog_version",
+        },
+    }
+
+    for table_name, expected_key in expected_keys.items():
+        assert {
+            column.name for column in Base.metadata.tables[table_name].primary_key
+        } == expected_key
 
 
 def test_initial_migration_creates_pgvector_and_has_a_downgrade() -> None:
