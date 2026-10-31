@@ -11,6 +11,7 @@ from sqlalchemy import engine_from_config, pool
 
 import catering_agent.db.models  # noqa: F401
 from catering_agent.config import get_settings
+from catering_agent.db.alembic_config import escape_configparser_value
 from catering_agent.db.base import Base
 
 config = context.config
@@ -32,7 +33,7 @@ def _configure_database_url() -> None:
         raise RuntimeError(
             "CATERING_DATABASE_URL is required to run database migrations"
         )
-    config.set_main_option("sqlalchemy.url", database_url)
+    config.set_main_option("sqlalchemy.url", escape_configparser_value(database_url))
 
 
 def run_migrations_offline() -> None:
