@@ -21,7 +21,10 @@ class IntakeAssessment(BaseModel):
 
 
 def assess_event_brief(
-    brief: EventBrief, *, reference_date: date | None = None
+    brief: EventBrief,
+    *,
+    reference_date: date | None = None,
+    require_venue_id: bool = True,
 ) -> IntakeAssessment:
     """Return every missing or invalid required field without supplying a value."""
 
@@ -29,7 +32,8 @@ def assess_event_brief(
     _require_client_name(brief.client_name, needs_input)
     _require_text(brief.event_location, "event_location", needs_input)
     _require_regional_specification(brief, needs_input)
-    _require_text(brief.venue_id, "venue_id", needs_input)
+    if require_venue_id:
+        _require_text(brief.venue_id, "venue_id", needs_input)
     _require_guest_count(brief, needs_input)
     _require_text(brief.event_type, "event_type", needs_input)
     _require_service_styles(brief, needs_input)
