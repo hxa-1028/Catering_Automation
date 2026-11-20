@@ -227,8 +227,8 @@ class FieldEvidence(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    evidence_span: str | None = None
-    confidence: Annotated[float, Field(ge=0, le=1)] | None = None
+    evidence_span: str | None
+    confidence: Annotated[float, Field(ge=0, le=1)] | None
 
 
 class EventBrief(BaseModel):

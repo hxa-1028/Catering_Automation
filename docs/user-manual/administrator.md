@@ -1,6 +1,6 @@
 # Administrator guide
 
-## Local runtime (Phase 3)
+## Local runtime (Phases 3 to 7)
 
 This proof-of-concept runs only on the installing machine. It does not expose
 the reviewer portal to a LAN or the internet.
@@ -12,8 +12,15 @@ restricted to the installing user:
 
 1. `docker/secrets/db_password` — the generated PostgreSQL password.
 2. `docker/secrets/llm_api_key` — the configured provider key. It is not used
-   for proposal generation at this phase, but the runtime verifies that the
-   required secret is available.
+   for proposal generation in this phase. It is used only when the Phase 7
+   extraction component is invoked; the runtime verifies that the required
+   secret is available.
+
+In `docker/.env`, set `LLM_PROVIDER` to `anthropic` or `openai`, and set
+`LLM_MODEL` to the provider's approved, pinned model ID. Keep the key only in
+`docker/secrets/llm_api_key`. When extraction is invoked, submitted event text
+and contact information are sent to that configured provider; confirm the
+client's approved data-handling arrangement before enabling it.
 
 Start the services with:
 
