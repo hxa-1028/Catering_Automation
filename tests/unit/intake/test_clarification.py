@@ -58,6 +58,16 @@ def test_partial_regional_specification_requires_clarification() -> None:
     ]
 
 
+def test_catalog_pipeline_can_defer_the_venue_id_check() -> None:
+    assessment = assess_event_brief(
+        _brief(venue_id=None),
+        reference_date=date(2026, 6, 1),
+        require_venue_id=False,
+    )
+
+    assert assessment.status == "READY"
+
+
 def test_client_name_cannot_exceed_the_supported_length() -> None:
     assessment = assess_event_brief(
         _brief(client_name="x" * 201), reference_date=date(2026, 6, 1)
