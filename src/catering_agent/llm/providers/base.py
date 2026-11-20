@@ -1,4 +1,4 @@
-"""Provider contract for one bounded structured extraction request."""
+"""Provider contract for bounded, schema-constrained LLM calls."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class LLMProviderError(RuntimeError):
 
 
 class BriefExtractionProvider(Protocol):
-    """A provider that returns only one schema-constrained extraction object."""
+    """A provider that extracts a brief and selects only supplied menu IDs."""
 
     provider_name: str
     model_id: str
@@ -28,3 +28,12 @@ class BriefExtractionProvider(Protocol):
         output_schema: Mapping[str, object],
     ) -> Mapping[str, object]:
         """Extract one structured event brief without invoking application tools."""
+
+    def select_menu(
+        self,
+        *,
+        system_prompt: str,
+        selection_input: str,
+        output_schema: Mapping[str, object],
+    ) -> Mapping[str, object]:
+        """Select one menu ID from application-supplied candidates only."""

@@ -31,6 +31,22 @@ def test_openai_provider_requests_strict_json_schema() -> None:
     assert responses.kwargs["text"]["format"]["type"] == "json_schema"
 
 
+def test_openai_provider_requests_strict_menu_selection_schema() -> None:
+    responses = _OpenAIResponses()
+    provider = OpenAIBriefExtractionProvider(
+        "sanitized-key", "configured-model", client=SimpleNamespace(responses=responses)
+    )
+
+    provider.select_menu(
+        system_prompt="select",
+        selection_input="candidates",
+        output_schema={"type": "object", "properties": {}},
+    )
+
+    assert responses.kwargs["text"]["format"]["name"] == "menu_selection"
+    assert responses.kwargs["text"]["format"]["strict"] is True
+
+
 def test_anthropic_provider_forces_only_the_structured_output_tool() -> None:
     messages = _AnthropicMessages()
     provider = AnthropicBriefExtractionProvider(
@@ -51,6 +67,22 @@ def test_anthropic_provider_forces_only_the_structured_output_tool() -> None:
         "type": "object",
         "properties": {},
     }
+
+
+def test_anthropic_provider_forces_only_the_menu_selection_tool() -> None:
+    messages = _AnthropicMessages()
+    provider = AnthropicBriefExtractionProvider(
+        "sanitized-key", "configured-model", client=SimpleNamespace(messages=messages)
+    )
+
+    provider.select_menu(
+        system_prompt="select",
+        selection_input="candidates",
+        output_schema={"type": "object", "properties": {}},
+    )
+
+    assert messages.kwargs["tool_choice"]["name"] == "submit_menu_selection"
+    assert messages.kwargs["tools"][0]["strict"] is True
 
 
 def test_factory_requires_a_non_blank_model_id(tmp_path: Path) -> None:
@@ -81,11 +113,13 @@ class _AnthropicMessages:
 
     def create(self, **kwargs: object) -> SimpleNamespace:
         self.kwargs = kwargs
+        tool_name = kwargs["tools"][0]["name"]
+        assert isinstance(tool_name, str)
         return SimpleNamespace(
             content=[
                 SimpleNamespace(
                     type="tool_use",
-                    name="submit_event_brief",
+                    name=tool_name,
                     input={"field_evidence": {}},
                 )
             ]

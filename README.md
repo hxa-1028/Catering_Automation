@@ -12,6 +12,9 @@ The bundled catalog is synthetic prototype data only; it is not client-ready
 content. Phases 5 to 8 add deterministic catalog resolution, structured intake
 clarification, schema-constrained LLM brief extraction, and a bounded pipeline
 that stops for clarification or returns eligible source-backed catalog records.
+Phase 9 adds LLM menu selection restricted to those eligible IDs and attaches
+the exact selected-menu, venue, and regional-configuration source citations.
+It does not yet provide semantic document-chunk retrieval.
 A live extraction call requires an administrator-configured provider and pinned
 model ID; tests never call an LLM. The product does not yet contain pricing,
 proposal generation,

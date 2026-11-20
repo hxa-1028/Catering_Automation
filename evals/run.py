@@ -30,11 +30,15 @@ class RecordedBriefProvider:
     """Return a scrubbed, recorded extraction instead of calling an LLM."""
 
     response: Mapping[str, object]
+    selection_response: Mapping[str, object] | None = None
     provider_name: str = "recorded"
     model_id: str = "structured-eval"
 
     def extract(self, **_: object) -> Mapping[str, object]:
         return self.response
+
+    def select_menu(self, **_: object) -> Mapping[str, object]:
+        return self.selection_response or {}
 
 
 def run_golden_suite(case_root: Path = GOLDEN_ROOT) -> tuple[str, ...]:
@@ -80,7 +84,12 @@ def _run_case(case_path: Path, snapshot: CatalogSnapshot) -> None:
         reference_date=reference_date,
     )
     result = run_pipeline(
-        RecordedBriefProvider(_load_json(case_path / "extraction.json")),
+        RecordedBriefProvider(
+            _load_json(case_path / "extraction.json"),
+            _load_json(case_path / "selection.json")
+            if (case_path / "selection.json").is_file()
+            else None,
+        ),
         snapshot,
         request,
     )
@@ -101,6 +110,16 @@ def _result_projection(result: PipelineResult) -> dict[str, object]:
         "eligible_menu_ids": [menu.menu_id for menu in catalog.eligible_menus]
         if catalog is not None
         else [],
+        "selected_menu_id": (
+            result.menu_selection.selected_menu.menu_id
+            if result.menu_selection is not None
+            else None
+        ),
+        "cited_source_ref_ids": (
+            [source.source_ref_id for source in result.menu_selection.cited_source_refs]
+            if result.menu_selection is not None
+            else []
+        ),
     }
 
 
@@ -114,6 +133,11 @@ def _assert_source_backed(result: PipelineResult) -> None:
         not menu.source_ref.source_ref_id for menu in catalog.eligible_menus
     ):
         raise EvaluationFailure("resolved catalog record is missing source provenance")
+    if (
+        result.menu_selection is not None
+        and len(result.menu_selection.cited_source_refs) != 3
+    ):
+        raise EvaluationFailure("selected menu is missing a required source citation")
 
 
 def _sample_snapshot() -> CatalogSnapshot:

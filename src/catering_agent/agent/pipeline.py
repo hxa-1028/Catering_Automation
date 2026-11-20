@@ -7,6 +7,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from catering_agent.agent.menu_selection import (
+    InvalidMenuSelectionError,
+    MenuSelectionError,
+    MenuSelectionResult,
+    select_menu,
+)
 from catering_agent.catalog.resolution import (
     CatalogLookup,
     CatalogResolution,
@@ -43,6 +49,7 @@ class PipelineResult(BaseModel):
     brief: EventBrief
     extraction: BriefExtractionResult | None = None
     catalog_resolution: CatalogResolution | None = None
+    menu_selection: MenuSelectionResult | None = None
     needs_input: tuple[NeedInput, ...] = ()
 
 
@@ -111,13 +118,45 @@ def run_pipeline(
             catalog_resolution=catalog_resolution,
             needs_input=(NeedInput(field="venue", reason="unresolved"),),
         )
+    resolved_brief = assessment.brief.model_copy(
+        update={"venue_id": catalog_resolution.venue.venue_id}
+    )
+    if (
+        not resolved_brief.menu_preferences
+        or not resolved_brief.menu_preferences.strip()
+    ):
+        return PipelineResult(
+            status="SOURCES_RESOLVED",
+            brief=resolved_brief,
+            extraction=extraction,
+            catalog_resolution=catalog_resolution,
+        )
+
+    try:
+        menu_selection = select_menu(provider, resolved_brief, catalog_resolution)
+    except InvalidMenuSelectionError:
+        return PipelineResult(
+            status="NEEDS_CLARIFICATION",
+            brief=resolved_brief,
+            extraction=extraction,
+            catalog_resolution=catalog_resolution,
+            needs_input=(NeedInput(field="menu", reason="invalid_selection"),),
+        )
+    except (MenuSelectionError, LLMProviderError):
+        return PipelineResult(
+            status="NEEDS_CLARIFICATION",
+            brief=resolved_brief,
+            extraction=extraction,
+            catalog_resolution=catalog_resolution,
+            needs_input=(NeedInput(field="menu", reason="selection_failed"),),
+        )
+
     return PipelineResult(
         status="SOURCES_RESOLVED",
-        brief=assessment.brief.model_copy(
-            update={"venue_id": catalog_resolution.venue.venue_id}
-        ),
+        brief=resolved_brief,
         extraction=extraction,
         catalog_resolution=catalog_resolution,
+        menu_selection=menu_selection,
     )
 
 
