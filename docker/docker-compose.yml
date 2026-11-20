@@ -64,6 +64,8 @@ services:
       CATERING_DATABASE_USER: catering
       CATERING_DB_PASSWORD_SECRET_FILE: /run/secrets/db_password
       CATERING_LLM_API_KEY_SECRET_FILE: /run/secrets/llm_api_key
+      CATERING_LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      CATERING_LLM_MODEL: ${LLM_MODEL:-}
       CATERING_GOTENBERG_URL: http://docconv:3000
     secrets:
       - db_password
@@ -102,6 +104,8 @@ services:
       CATERING_DATABASE_USER: catering
       CATERING_DB_PASSWORD_SECRET_FILE: /run/secrets/db_password
       CATERING_LLM_API_KEY_SECRET_FILE: /run/secrets/llm_api_key
+      CATERING_LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      CATERING_LLM_MODEL: ${LLM_MODEL:-}
       CATERING_GOTENBERG_URL: http://docconv:3000
     secrets:
       - db_password

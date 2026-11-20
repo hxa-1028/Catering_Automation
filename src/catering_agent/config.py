@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     database_user: str = "catering"
     db_password_secret_file: Path = Path("/run/secrets/db_password")
     llm_api_key_secret_file: Path = Path("/run/secrets/llm_api_key")
+    llm_provider: Literal["anthropic", "openai"] = "anthropic"
+    llm_model: str | None = None
     gotenberg_url: str = "http://docconv:3000"
 
     @staticmethod
@@ -68,6 +70,11 @@ class Settings(BaseSettings):
             self._read_secret_file(self.db_password_secret_file) is not None
             and self._read_secret_file(self.llm_api_key_secret_file) is not None
         )
+
+    def resolved_llm_api_key(self) -> str | None:
+        """Return the configured file secret without logging or persisting it."""
+
+        return self._read_secret_file(self.llm_api_key_secret_file)
 
 
 @lru_cache

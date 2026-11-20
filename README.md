@@ -9,7 +9,10 @@ venue requirements, or other business facts.
 Phases 1–4 establish the Python foundation, source-backed database schema,
 local-only five-service Docker runtime, and strict local catalog ingestion.
 The bundled catalog is synthetic prototype data only; it is not client-ready
-content. The product does not yet contain LLM calls, proposal generation,
+content. Phases 5 to 7 add deterministic catalog resolution, structured intake
+clarification, and schema-constrained LLM brief extraction. A live extraction
+call requires an administrator-configured provider and pinned model ID; tests
+never call an LLM. The product does not yet contain proposal generation,
 customer enquiry routes, or installer automation.
 
 The product will be delivered as a dedicated, isolated deployment for each
