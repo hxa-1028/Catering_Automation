@@ -49,12 +49,42 @@ class OpenAIBriefExtractionProvider:
                 }
             },
         )
-        try:
-            parsed = json.loads(response.output_text)
-        except (AttributeError, TypeError, json.JSONDecodeError) as error:
-            raise LLMProviderError(
-                "OpenAI did not return a complete structured event brief"
-            ) from error
-        if not isinstance(parsed, Mapping):
-            raise LLMProviderError("OpenAI event-brief output must be an object")
-        return parsed
+        return _structured_output(response, "event-brief")
+
+    def select_menu(
+        self,
+        *,
+        system_prompt: str,
+        selection_input: str,
+        output_schema: Mapping[str, object],
+    ) -> Mapping[str, object]:
+        response = self._client.responses.create(
+            model=self.model_id,
+            temperature=LLM_TEMPERATURE_EXTRACTION,
+            store=False,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": selection_input},
+            ],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "menu_selection",
+                    "strict": True,
+                    "schema": dict(output_schema),
+                }
+            },
+        )
+        return _structured_output(response, "menu-selection")
+
+
+def _structured_output(response: Any, request_name: str) -> Mapping[str, object]:
+    try:
+        parsed = json.loads(response.output_text)
+    except (AttributeError, TypeError, json.JSONDecodeError) as error:
+        raise LLMProviderError(
+            f"OpenAI did not return a complete structured {request_name}"
+        ) from error
+    if not isinstance(parsed, Mapping):
+        raise LLMProviderError(f"OpenAI {request_name} output must be an object")
+    return parsed

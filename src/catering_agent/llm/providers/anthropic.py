@@ -60,3 +60,40 @@ class AnthropicBriefExtractionProvider:
             ):
                 return tool_input
         raise LLMProviderError("Anthropic did not return the event-brief tool input")
+
+    def select_menu(
+        self,
+        *,
+        system_prompt: str,
+        selection_input: str,
+        output_schema: Mapping[str, object],
+    ) -> Mapping[str, object]:
+        response = self._client.messages.create(
+            model=self.model_id,
+            max_tokens=1024,
+            temperature=LLM_TEMPERATURE_EXTRACTION,
+            system=system_prompt,
+            messages=[{"role": "user", "content": selection_input}],
+            tools=[
+                {
+                    "name": "submit_menu_selection",
+                    "description": "Submit only one supplied menu ID.",
+                    "strict": True,
+                    "input_schema": dict(output_schema),
+                }
+            ],
+            tool_choice={
+                "type": "tool",
+                "name": "submit_menu_selection",
+                "disable_parallel_tool_use": True,
+            },
+        )
+        for block in response.content:
+            tool_input = getattr(block, "input", None)
+            if (
+                getattr(block, "type", None) == "tool_use"
+                and getattr(block, "name", None) == "submit_menu_selection"
+                and isinstance(tool_input, Mapping)
+            ):
+                return tool_input
+        raise LLMProviderError("Anthropic did not return the menu-selection tool input")

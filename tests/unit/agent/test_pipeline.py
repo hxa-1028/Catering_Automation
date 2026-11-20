@@ -11,6 +11,7 @@ from catering_agent.catalog.ingestion import parse_catalog_manifest
 from catering_agent.catalog.resolution import CatalogSnapshot
 from catering_agent.intake.extraction import ExtractionContext
 from catering_agent.integrations.local_source import SourceDocument
+from catering_agent.llm.providers.base import LLMProviderError
 
 ROOT = Path(__file__).parents[3]
 SAMPLE_PATH = ROOT / "data" / "samples" / "catalog.json"
@@ -23,13 +24,22 @@ BRIEF_TEXT = (
 @dataclass
 class FakeBriefProvider:
     response: Mapping[str, object]
+    selection_response: Mapping[str, object] = field(default_factory=dict)
+    selection_error: LLMProviderError | None = None
     provider_name: str = "fake"
     model_id: str = "fake-model"
     requests: list[dict[str, object]] = field(default_factory=list)
+    selection_requests: list[dict[str, object]] = field(default_factory=list)
 
     def extract(self, **kwargs: object) -> Mapping[str, object]:
         self.requests.append(kwargs)
         return self.response
+
+    def select_menu(self, **kwargs: object) -> Mapping[str, object]:
+        self.selection_requests.append(kwargs)
+        if self.selection_error is not None:
+            raise self.selection_error
+        return self.selection_response
 
 
 def test_resolves_catalog_after_one_evidence_backed_extraction() -> None:
@@ -45,6 +55,77 @@ def test_resolves_catalog_after_one_evidence_backed_extraction() -> None:
         "sample-lunch",
     ]
     assert len(provider.requests) == 1
+    assert provider.selection_requests == []
+
+
+def test_selects_only_an_eligible_menu_and_returns_catalog_citations() -> None:
+    response = _complete_response()
+    response["menu_preferences"] = "Sample Lunch"
+    response["field_evidence"] = _evidence(
+        menu_preferences={"evidence_span": "Sample Lunch", "confidence": 0.9}
+    )
+    provider = FakeBriefProvider(
+        response,
+        selection_response={"selected_menu_id": "sample-lunch"},
+    )
+
+    result = run_pipeline(
+        provider,
+        _snapshot(),
+        _request(brief_text=f"{BRIEF_TEXT} Prefers Sample Lunch."),
+    )
+
+    assert result.status == "SOURCES_RESOLVED"
+    assert result.menu_selection is not None
+    assert result.menu_selection.selected_menu.menu_id == "sample-lunch"
+    assert len(result.menu_selection.cited_source_refs) == 3
+    assert len(provider.selection_requests) == 1
+
+
+def test_ineligible_menu_selection_stops_for_clarification() -> None:
+    response = _complete_response()
+    response["menu_preferences"] = "Sample Lunch"
+    response["field_evidence"] = _evidence(
+        menu_preferences={"evidence_span": "Sample Lunch", "confidence": 0.9}
+    )
+
+    result = run_pipeline(
+        FakeBriefProvider(
+            response,
+            selection_response={"selected_menu_id": "not-an-eligible-menu"},
+        ),
+        _snapshot(),
+        _request(brief_text=f"{BRIEF_TEXT} Prefers Sample Lunch."),
+    )
+
+    assert result.status == "NEEDS_CLARIFICATION"
+    assert result.menu_selection is None
+    assert [item.model_dump() for item in result.needs_input] == [
+        {"field": "menu", "reason": "invalid_selection"}
+    ]
+
+
+def test_menu_selection_provider_failure_stops_without_a_guess() -> None:
+    response = _complete_response()
+    response["menu_preferences"] = "Sample Lunch"
+    response["field_evidence"] = _evidence(
+        menu_preferences={"evidence_span": "Sample Lunch", "confidence": 0.9}
+    )
+
+    result = run_pipeline(
+        FakeBriefProvider(
+            response,
+            selection_error=LLMProviderError("sanitized provider failure"),
+        ),
+        _snapshot(),
+        _request(brief_text=f"{BRIEF_TEXT} Prefers Sample Lunch."),
+    )
+
+    assert result.status == "NEEDS_CLARIFICATION"
+    assert result.menu_selection is None
+    assert [item.model_dump() for item in result.needs_input] == [
+        {"field": "menu", "reason": "selection_failed"}
+    ]
 
 
 def test_missing_intake_value_stops_before_catalog_resolution() -> None:

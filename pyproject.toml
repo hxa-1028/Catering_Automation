@@ -35,6 +35,7 @@ packages = ["src/catering_agent"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/catering_agent/llm/prompts/extract_brief.v1.md" = "catering_agent/llm/prompts/extract_brief.v1.md"
+"src/catering_agent/llm/prompts/select_menu.v1.md" = "catering_agent/llm/prompts/select_menu.v1.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
