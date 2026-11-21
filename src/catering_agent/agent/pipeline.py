@@ -28,6 +28,7 @@ from catering_agent.intake.extraction import (
     extract_event_brief,
 )
 from catering_agent.llm.providers.base import BriefExtractionProvider, LLMProviderError
+from catering_agent.rules.pricing import PricingError, PricingResult, price_menu
 
 
 class PipelineRequest(BaseModel):
@@ -45,11 +46,12 @@ class PipelineResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    status: Literal["NEEDS_CLARIFICATION", "SOURCES_RESOLVED"]
+    status: Literal["NEEDS_CLARIFICATION", "SOURCES_RESOLVED", "PRICED"]
     brief: EventBrief
     extraction: BriefExtractionResult | None = None
     catalog_resolution: CatalogResolution | None = None
     menu_selection: MenuSelectionResult | None = None
+    pricing: PricingResult | None = None
     needs_input: tuple[NeedInput, ...] = ()
 
 
@@ -151,12 +153,44 @@ def run_pipeline(
             needs_input=(NeedInput(field="menu", reason="selection_failed"),),
         )
 
+    if catalog_resolution.regional_specification is None:
+        return PipelineResult(
+            status="NEEDS_CLARIFICATION",
+            brief=resolved_brief,
+            extraction=extraction,
+            catalog_resolution=catalog_resolution,
+            menu_selection=menu_selection,
+            needs_input=(
+                NeedInput(field="regional_specification", reason="unresolved"),
+            ),
+        )
+    assert resolved_brief.event_date is not None
+    assert resolved_brief.guest_count is not None
+    try:
+        pricing = price_menu(
+            menu=menu_selection.selected_menu,
+            venue=catalog_resolution.venue,
+            regional_specification=catalog_resolution.regional_specification,
+            event_date=resolved_brief.event_date,
+            guest_count=resolved_brief.guest_count,
+            price_list_items=snapshot.price_list_items,
+        )
+    except PricingError as error:
+        return PipelineResult(
+            status="NEEDS_CLARIFICATION",
+            brief=resolved_brief,
+            extraction=extraction,
+            catalog_resolution=catalog_resolution,
+            menu_selection=menu_selection,
+            needs_input=(NeedInput(field="pricing", reason=error.reason),),
+        )
     return PipelineResult(
-        status="SOURCES_RESOLVED",
+        status="PRICED",
         brief=resolved_brief,
         extraction=extraction,
         catalog_resolution=catalog_resolution,
         menu_selection=menu_selection,
+        pricing=pricing,
     )
 
 

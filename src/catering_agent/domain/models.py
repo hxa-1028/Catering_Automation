@@ -181,6 +181,7 @@ class Menu(BaseModel):
     service_styles: tuple[Identifier, ...]
     venue_ids: tuple[Identifier, ...] | None = None
     sections: tuple[Identifier, ...]
+    price_sku: Identifier | None = None
     source_ref: SourceRef
 
 

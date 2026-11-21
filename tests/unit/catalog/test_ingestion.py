@@ -20,7 +20,7 @@ SAMPLE_PATH = ROOT / "data" / "samples" / "catalog.json"
 def test_sanitized_sample_catalog_has_complete_provenance() -> None:
     bundle = parse_catalog_manifest(_sample_document())
 
-    assert bundle.catalog_version == "sample-2026-11-01"
+    assert bundle.catalog_version == "sample-2026-11-22"
     assert len(bundle.regional_specifications) == 1
     assert len(bundle.venues) == 3
     assert len(bundle.menus) == 5
@@ -49,6 +49,14 @@ def test_unknown_menu_reference_fails_closed() -> None:
         parse_catalog_manifest(_document_for(payload))
 
 
+def test_unknown_menu_price_sku_fails_before_any_persistence() -> None:
+    payload = _sample_payload()
+    payload["menus"][0]["price_sku"] = "unknown-price"
+
+    with pytest.raises(CatalogValidationError, match="unknown price SKU"):
+        parse_catalog_manifest(_document_for(payload))
+
+
 def test_float_price_is_rejected_instead_of_coerced() -> None:
     payload = _sample_payload()
     payload["price_list_items"][0]["unit_price"]["amount"] = 100.0
@@ -65,7 +73,7 @@ def test_cli_dry_run_validates_the_sample_without_database_access(
     )
 
     assert exit_code == 0
-    assert "Validated catalog version sample-2026-11-01" in capsys.readouterr().out
+    assert "Validated catalog version sample-2026-11-22" in capsys.readouterr().out
 
 
 def _sample_payload() -> dict[str, object]:

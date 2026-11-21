@@ -11,6 +11,7 @@ def test_golden_suite_matches_every_recorded_expectation() -> None:
         "golden-04-unknown-venue",
         "golden-05-invalid-extraction",
         "golden-06-preferred-menu-selection",
+        "golden-07-unpriced-menu",
     )
 
 

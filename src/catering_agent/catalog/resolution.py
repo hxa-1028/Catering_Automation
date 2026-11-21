@@ -15,6 +15,7 @@ from catering_agent.catalog.ingestion import CatalogBundle
 from catering_agent.db.models import (
     CatalogVersionRecord,
     MenuRecord,
+    PriceListItemRecord,
     RegionalSpecificationRecord,
     SourceReferenceRecord,
     VenueRecord,
@@ -23,7 +24,9 @@ from catering_agent.domain.models import (
     EffectiveWindow,
     Identifier,
     Menu,
+    Money,
     NeedInput,
+    PriceListItem,
     RegionalSpecification,
     SourceLocation,
     SourceRef,
@@ -70,6 +73,7 @@ class CatalogSnapshot:
     regional_specifications: tuple[RegionalSpecification, ...]
     venues: tuple[Venue, ...]
     menus: tuple[Menu, ...]
+    price_list_items: tuple[PriceListItem, ...] = ()
 
     @classmethod
     def from_bundle(cls, bundle: CatalogBundle) -> CatalogSnapshot:
@@ -80,6 +84,7 @@ class CatalogSnapshot:
             regional_specifications=bundle.regional_specifications,
             venues=bundle.venues,
             menus=bundle.menus,
+            price_list_items=bundle.price_list_items,
         )
 
 
@@ -178,10 +183,18 @@ def load_active_catalog_snapshot(session: Session) -> CatalogSnapshot:
             select(MenuRecord).where(MenuRecord.catalog_version == catalog_version)
         )
     )
+    price_records = tuple(
+        session.scalars(
+            select(PriceListItemRecord).where(
+                PriceListItemRecord.catalog_version == catalog_version
+            )
+        )
+    )
     source_ref_ids = (
         {record.source_ref_id for record in regional_records}
         | {record.source_ref_id for record in venue_records}
         | {record.source_ref_id for record in menu_records}
+        | {record.source_ref_id for record in price_records}
     )
     source_records = tuple(
         session.scalars(
@@ -206,6 +219,10 @@ def load_active_catalog_snapshot(session: Session) -> CatalogSnapshot:
             ),
             menus=tuple(
                 _menu(record, source_refs, catalog_version) for record in menu_records
+            ),
+            price_list_items=tuple(
+                _price_list_item(record, source_refs, catalog_version)
+                for record in price_records
             ),
         )
     except (KeyError, ValidationError, ValueError) as error:
@@ -351,6 +368,30 @@ def _menu(
         service_styles=tuple(record.service_styles),
         venue_ids=None if record.venue_ids is None else tuple(record.venue_ids),
         sections=tuple(record.sections),
+        price_sku=record.price_sku,
+        source_ref=_required_source_ref(
+            record.source_ref_id, source_refs, catalog_version
+        ),
+    )
+
+
+def _price_list_item(
+    record: PriceListItemRecord,
+    source_refs: dict[str, SourceRef],
+    catalog_version: str,
+) -> PriceListItem:
+    return PriceListItem(
+        sku=record.sku,
+        region_spec_id=record.region_spec_id,
+        region_spec_version=record.region_spec_version,
+        locale=record.locale,
+        description=record.description,
+        unit=record.unit,
+        unit_price=Money(amount=record.unit_price, currency=record.currency),
+        min_qty=record.min_qty,
+        effective_window=EffectiveWindow(
+            effective_from=record.effective_from, effective_to=record.effective_to
+        ),
         source_ref=_required_source_ref(
             record.source_ref_id, source_refs, catalog_version
         ),

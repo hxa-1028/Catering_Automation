@@ -6,5 +6,12 @@ from catering_agent.agent.pipeline import (
     PipelineResult,
     run_pipeline,
 )
+from catering_agent.rules.pricing import PricingResult
 
-__all__ = ["MenuSelectionResult", "PipelineRequest", "PipelineResult", "run_pipeline"]
+__all__ = [
+    "MenuSelectionResult",
+    "PipelineRequest",
+    "PipelineResult",
+    "PricingResult",
+    "run_pipeline",
+]

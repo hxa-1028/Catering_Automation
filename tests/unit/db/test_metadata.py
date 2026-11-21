@@ -63,11 +63,11 @@ def test_region_scoped_price_and_rule_keys_do_not_collide_globally() -> None:
     } == {"rule_id", "region_spec_id", "region_spec_version", "catalog_version"}
 
 
-def test_alembic_initial_revision_is_the_current_head() -> None:
+def test_alembic_current_revision_is_the_current_head() -> None:
     config = Config(str(ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_current_head() == "20261101_0002"
+    assert script_directory.get_current_head() == "20261122_0003"
 
 
 def test_catalog_records_are_keyed_by_immutable_catalog_version() -> None:
