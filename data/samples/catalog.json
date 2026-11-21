@@ -1,5 +1,5 @@
 {
-  "catalog_version": "sample-2026-11-01",
+  "catalog_version": "sample-2026-11-22",
   "regional_specifications": [
     {
       "region_spec_id": "sample-us-west",
@@ -67,7 +67,8 @@
       "event_types": ["corporate"],
       "service_styles": ["buffet"],
       "venue_ids": ["sample-harbor-hall", "sample-garden-room"],
-      "sections": ["main"]
+      "sections": ["main"],
+      "price_sku": "sample-breakfast-service"
     },
     {
       "menu_id": "sample-lunch",
@@ -79,7 +80,8 @@
       "event_types": ["corporate"],
       "service_styles": ["buffet"],
       "venue_ids": null,
-      "sections": ["main"]
+      "sections": ["main"],
+      "price_sku": "sample-lunch-service"
     },
     {
       "menu_id": "sample-dinner",
@@ -91,7 +93,8 @@
       "event_types": ["wedding"],
       "service_styles": ["seated"],
       "venue_ids": ["sample-harbor-hall", "sample-studio-loft"],
-      "sections": ["main"]
+      "sections": ["main"],
+      "price_sku": "sample-dinner-service"
     },
     {
       "menu_id": "sample-reception",
@@ -103,7 +106,8 @@
       "event_types": ["wedding", "corporate"],
       "service_styles": ["reception"],
       "venue_ids": null,
-      "sections": ["main"]
+      "sections": ["main"],
+      "price_sku": "sample-reception-service"
     },
     {
       "menu_id": "sample-station",

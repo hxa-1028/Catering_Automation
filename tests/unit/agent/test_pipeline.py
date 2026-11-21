@@ -75,10 +75,16 @@ def test_selects_only_an_eligible_menu_and_returns_catalog_citations() -> None:
         _request(brief_text=f"{BRIEF_TEXT} Prefers Sample Lunch."),
     )
 
-    assert result.status == "SOURCES_RESOLVED"
+    assert result.status == "PRICED"
     assert result.menu_selection is not None
     assert result.menu_selection.selected_menu.menu_id == "sample-lunch"
     assert len(result.menu_selection.cited_source_refs) == 3
+    assert result.pricing is not None
+    assert [line.total.amount for line in result.pricing.line_items] == [
+        1500,
+        100,
+    ]
+    assert result.pricing.total.amount == 1600
     assert len(provider.selection_requests) == 1
 
 

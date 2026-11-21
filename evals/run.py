@@ -120,11 +120,40 @@ def _result_projection(result: PipelineResult) -> dict[str, object]:
             if result.menu_selection is not None
             else []
         ),
+        "line_items": (
+            [
+                {
+                    "line_item_id": line.line_item_id,
+                    "quantity": str(line.quantity),
+                    "unit": line.unit,
+                    "unit_price": str(line.unit_price.amount),
+                    "total": str(line.total.amount),
+                    "currency": line.total.currency,
+                    "source_ref_id": line.source_ref.source_ref_id,
+                }
+                for line in result.pricing.line_items
+            ]
+            if result.pricing is not None
+            else []
+        ),
+        "total": (
+            {
+                "amount": str(result.pricing.total.amount),
+                "currency": result.pricing.total.currency,
+            }
+            if result.pricing is not None
+            else None
+        ),
+        "pricing_source_ref_ids": (
+            [source.source_ref_id for source in result.pricing.cited_source_refs]
+            if result.pricing is not None
+            else []
+        ),
     }
 
 
 def _assert_source_backed(result: PipelineResult) -> None:
-    if result.status != "SOURCES_RESOLVED":
+    if result.status not in {"SOURCES_RESOLVED", "PRICED"}:
         return
     catalog = result.catalog_resolution
     if catalog is None or catalog.venue is None or not catalog.eligible_menus:
@@ -138,6 +167,11 @@ def _assert_source_backed(result: PipelineResult) -> None:
         and len(result.menu_selection.cited_source_refs) != 3
     ):
         raise EvaluationFailure("selected menu is missing a required source citation")
+    if result.status == "PRICED":
+        if result.pricing is None or not result.pricing.line_items:
+            raise EvaluationFailure("priced result is missing line items")
+        if any(not line.source_ref.source_ref_id for line in result.pricing.line_items):
+            raise EvaluationFailure("priced line item is missing source provenance")
 
 
 def _sample_snapshot() -> CatalogSnapshot:

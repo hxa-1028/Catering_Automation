@@ -212,11 +212,31 @@ def parse_catalog_manifest(document: SourceDocument) -> CatalogBundle:
     _require_unique(rule_keys, len(business_rules), "business rule")
     _validate_region_references(business_rules, region_keys, "business rule")
 
-    price_skus = {record.sku for record in price_list_items}
+    price_skus_by_region = {
+        (record.sku, record.region_spec_id, record.region_spec_version)
+        for record in price_list_items
+    }
     for venue in venues:
-        if not set(venue.required_fee_skus) <= price_skus:
+        venue_price_skus = {
+            (sku, venue.region_spec_id, venue.region_spec_version)
+            for sku in venue.required_fee_skus
+        }
+        if not venue_price_skus <= price_skus_by_region:
             raise CatalogValidationError(
                 f"venue {venue.venue_id} references an unknown required fee SKU"
+            )
+    for menu in menus:
+        if (
+            menu.price_sku is not None
+            and (
+                menu.price_sku,
+                menu.region_spec_id,
+                menu.region_spec_version,
+            )
+            not in price_skus_by_region
+        ):
+            raise CatalogValidationError(
+                f"menu {menu.menu_id} references an unknown price SKU"
             )
 
     return CatalogBundle(
@@ -512,6 +532,7 @@ def _menu_records(bundle: CatalogBundle) -> list[MenuRecord]:
             service_styles=list(record.service_styles),
             venue_ids=None if record.venue_ids is None else list(record.venue_ids),
             sections=list(record.sections),
+            price_sku=record.price_sku,
             source_ref_id=record.source_ref.source_ref_id,
         )
         for record in bundle.menus

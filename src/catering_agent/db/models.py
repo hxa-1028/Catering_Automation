@@ -153,6 +153,7 @@ class MenuRecord(Base):
     service_styles: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     venue_ids: Mapped[list[str] | None] = mapped_column(JSONB)
     sections: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    price_sku: Mapped[str | None] = mapped_column(String(128))
     source_ref_id: Mapped[str] = mapped_column(
         ForeignKey("source_references.source_ref_id"), nullable=False
     )
