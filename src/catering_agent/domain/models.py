@@ -328,7 +328,7 @@ class Proposal(BaseModel):
 
     @model_validator(mode="after")
     def priced_proposals_are_complete_and_reproducible(self) -> Proposal:
-        if self.status != ProposalStatus.PRICED:
+        if self.status not in {ProposalStatus.PRICED, ProposalStatus.RENDERED}:
             return self
         if self.needs_input:
             raise ValueError("priced proposals cannot contain unresolved input")
@@ -368,4 +368,8 @@ class Proposal(BaseModel):
             raise ValueError("proposal line items require proposal source references")
         if len({line.line_item_id for line in self.line_items}) != len(self.line_items):
             raise ValueError("proposal line item IDs must be unique")
+        if self.status == ProposalStatus.RENDERED and (
+            not self.docx_path or not self.pdf_path
+        ):
+            raise ValueError("rendered proposals require DOCX and PDF artifacts")
         return self

@@ -20,9 +20,15 @@ fees are added. Missing mappings, unsupported price units, and invalid source
 data stop for clarification rather than produce a guessed figure. It does not
 yet provide semantic document-chunk retrieval or complete regional pricing
 rules such as tax, service charge, staffing, and rounding.
+Phase 11 turns a valid priced result into a reproducible proposal record with
+its exact total and source references. Phase 12 adds a fail-closed rendering
+service: it fills only the selected venue's approved DOCX template and converts
+the result to PDF through Gotenberg. It is not wired to a portal or job route
+yet, and real client templates are not included in this repository.
 A live extraction call requires an administrator-configured provider and pinned
 model ID; tests never call an LLM. The product does not yet contain proposal
-generation, customer enquiry routes, or installer automation.
+generation through a user-facing route, customer enquiry routes, or installer
+automation.
 
 The product will be delivered as a dedicated, isolated deployment for each
 client. The future customer intake channel is called the **Catering Enquiry
