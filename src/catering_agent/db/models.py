@@ -293,6 +293,9 @@ class ProposalRecord(Base):
     locale: Mapped[str] = mapped_column(String(64), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)
     timezone: Mapped[str] = mapped_column(String(128), nullable=False)
+    original_brief_text: Mapped[str | None] = mapped_column(Text)
+    total_amount: Mapped[Decimal | None] = mapped_column(Numeric)
+    source_ref_ids: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     warnings: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
     needs_input: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
     docx_path: Mapped[str | None] = mapped_column(Text)
@@ -326,7 +329,7 @@ class ProposalLineItemRecord(Base):
 
     line_item_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     proposal_id: Mapped[str] = mapped_column(
-        ForeignKey("proposals.proposal_id"), nullable=False
+        ForeignKey("proposals.proposal_id"), primary_key=True
     )
     quantity: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     unit: Mapped[str] = mapped_column(String(128), nullable=False)
