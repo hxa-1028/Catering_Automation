@@ -21,7 +21,10 @@ from catering_agent.proposal.persistence import (
     ProposalPersistenceError,
     _line_item_records,
     _proposal_record,
+    _require_matching_priced_line_items,
+    _require_matching_priced_record,
     persist_proposal,
+    persist_rendered_proposal,
 )
 
 ROOT = Path(__file__).parents[3]
@@ -132,6 +135,42 @@ def test_persistence_revalidates_a_model_copy_before_database_access() -> None:
         persist_proposal(proposal, "postgresql+psycopg://invalid")
 
 
+def test_rendered_persistence_requires_the_exact_stored_priced_snapshot() -> None:
+    priced = assemble_proposal(_priced_result(), "proposal-001", _brief_text())
+    record = _proposal_record(priced)
+    rendered = _rendered(proposal=priced)
+
+    _require_matching_priced_record(record, rendered)
+
+    record.catalog_version = "other-catalog"
+    with pytest.raises(ProposalPersistenceError, match="does not match"):
+        _require_matching_priced_record(record, rendered)
+
+
+def test_rendered_persistence_requires_the_exact_stored_priced_line_items() -> None:
+    proposal = assemble_proposal(_priced_result(), "proposal-001", _brief_text())
+    line_records = _line_item_records(proposal)
+    session = _LineItemSession(line_records)
+
+    _require_matching_priced_line_items(session, _rendered(proposal=proposal))
+
+    line_records[0].quantity = line_records[0].quantity + 1
+    with pytest.raises(ProposalPersistenceError, match="does not match"):
+        _require_matching_priced_line_items(session, _rendered(proposal=proposal))
+
+
+def test_rendered_persistence_refuses_incomplete_artifacts_before_database_access() -> (
+    None
+):
+    rendered = _rendered(
+        proposal=assemble_proposal(_priced_result(), "p-1", _brief_text())
+    )
+    invalid = rendered.model_copy(update={"pdf_path": None})
+
+    with pytest.raises(ProposalPersistenceError, match="proposal validation"):
+        persist_rendered_proposal(invalid, "postgresql+psycopg://invalid")
+
+
 def _priced_result() -> PipelineResult:
     return _pipeline_result("golden-06-preferred-menu-selection")
 
@@ -140,6 +179,26 @@ def _brief_text() -> str:
     return (GOLDEN_ROOT / "golden-06-preferred-menu-selection" / "brief.txt").read_text(
         encoding="utf-8"
     )
+
+
+def _rendered(proposal: Proposal) -> Proposal:
+    payload = proposal.model_dump(mode="json")
+    payload.update(
+        {
+            "status": ProposalStatus.RENDERED,
+            "docx_path": "/data/docstore/proposal/proposal.docx",
+            "pdf_path": "/data/docstore/proposal/proposal.pdf",
+        }
+    )
+    return Proposal.model_validate(payload)
+
+
+class _LineItemSession:
+    def __init__(self, line_items: list[object]) -> None:
+        self.line_items = line_items
+
+    def scalars(self, _: object) -> list[object]:
+        return self.line_items
 
 
 def _pipeline_result(case_name: str) -> PipelineResult:
