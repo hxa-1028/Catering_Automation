@@ -4,6 +4,7 @@ from catering_agent.proposal.assembly import ProposalAssemblyError, assemble_pro
 from catering_agent.proposal.persistence import (
     ProposalPersistenceError,
     persist_proposal,
+    persist_rendered_proposal,
 )
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     "ProposalPersistenceError",
     "assemble_proposal",
     "persist_proposal",
+    "persist_rendered_proposal",
 ]

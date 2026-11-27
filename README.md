@@ -25,6 +25,11 @@ its exact total and source references. Phase 12 adds a fail-closed rendering
 service: it fills only the selected venue's approved DOCX template and converts
 the result to PDF through Gotenberg. It is not wired to a portal or job route
 yet, and real client templates are not included in this repository.
+Phase 13 connects the bounded pipeline, proposal persistence, and rendering in
+one internal backend workflow. It stores a source-backed `PRICED` proposal
+before rendering and records `RENDERED` only when its matching DOCX/PDF paths
+are safely available. It remains unavailable from a route, worker, or UI until
+a later reviewed workflow adds those boundaries.
 A live extraction call requires an administrator-configured provider and pinned
 model ID; tests never call an LLM. The product does not yet contain proposal
 generation through a user-facing route, customer enquiry routes, or installer
