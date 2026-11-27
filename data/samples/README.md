@@ -4,3 +4,7 @@
 ingestion. It is not a client catalog, source of pricing, venue policy, menu
 content, tax treatment, or regional guidance. Replace it with approved sources
 and declared schemas before the system can be used for any client work.
+
+`templates/` contains a neutral DOCX rendering example for the sample Harbor
+Hall template ID. It is not a client-facing proposal or approved commercial
+content.
