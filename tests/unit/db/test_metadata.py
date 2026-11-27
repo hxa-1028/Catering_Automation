@@ -67,7 +67,7 @@ def test_alembic_current_revision_is_the_current_head() -> None:
     config = Config(str(ROOT / "alembic.ini"))
     script_directory = ScriptDirectory.from_config(config)
 
-    assert script_directory.get_current_head() == "20261122_0003"
+    assert script_directory.get_current_head() == "20261128_0004"
 
 
 def test_catalog_records_are_keyed_by_immutable_catalog_version() -> None:
@@ -93,6 +93,19 @@ def test_catalog_records_are_keyed_by_immutable_catalog_version() -> None:
         assert {
             column.name for column in Base.metadata.tables[table_name].primary_key
         } == expected_key
+
+
+def test_proposal_records_preserve_totals_and_source_backed_line_identity() -> None:
+    proposals = Base.metadata.tables["proposals"]
+    line_items = Base.metadata.tables["proposal_line_items"]
+
+    assert {"original_brief_text", "total_amount", "source_ref_ids"} <= {
+        column.name for column in proposals.columns
+    }
+    assert {column.name for column in line_items.primary_key} == {
+        "proposal_id",
+        "line_item_id",
+    }
 
 
 def test_initial_migration_creates_pgvector_and_has_a_downgrade() -> None:

@@ -317,8 +317,55 @@ class Proposal(BaseModel):
     locale: Identifier
     currency: CurrencyCode
     timezone: Identifier
+    original_brief_text: str | None = None
     line_items: tuple[ProposalLineItem, ...] = ()
+    total: Money | None = None
+    source_refs: tuple[SourceRef, ...] = ()
     warnings: tuple[str, ...] = ()
     needs_input: tuple[NeedInput, ...] = ()
     docx_path: str | None = None
     pdf_path: str | None = None
+
+    @model_validator(mode="after")
+    def priced_proposals_are_complete_and_reproducible(self) -> Proposal:
+        if self.status != ProposalStatus.PRICED:
+            return self
+        if self.needs_input:
+            raise ValueError("priced proposals cannot contain unresolved input")
+        if (
+            not self.original_brief_text
+            or not self.original_brief_text.strip()
+            or not self.line_items
+            or self.total is None
+            or not self.source_refs
+        ):
+            raise ValueError(
+                "priced proposals require original brief, line items, total, "
+                "and sources"
+            )
+        if self.total.currency != self.currency or any(
+            line.total.currency != self.currency for line in self.line_items
+        ):
+            raise ValueError("priced proposal currencies must match")
+        if self.total.amount != sum(
+            (line.total.amount for line in self.line_items), Decimal("0")
+        ):
+            raise ValueError("priced proposal total must equal its line items")
+        source_ref_ids = {source.source_ref_id for source in self.source_refs}
+        if len(source_ref_ids) != len(self.source_refs):
+            raise ValueError("proposal source references must be unique")
+        if any(
+            source.catalog_version != self.catalog_version
+            or source.region_spec_id != self.region_spec_id
+            or source.region_spec_version != self.region_spec_version
+            for source in self.source_refs
+        ):
+            raise ValueError("proposal source references must match pinned context")
+        if (
+            not {line.source_ref.source_ref_id for line in self.line_items}
+            <= source_ref_ids
+        ):
+            raise ValueError("proposal line items require proposal source references")
+        if len({line.line_item_id for line in self.line_items}) != len(self.line_items):
+            raise ValueError("proposal line item IDs must be unique")
+        return self

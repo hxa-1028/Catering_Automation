@@ -14,11 +14,15 @@ clarification, schema-constrained LLM brief extraction, and a bounded pipeline
 that stops for clarification or returns eligible source-backed catalog records.
 Phase 9 adds LLM menu selection restricted to those eligible IDs and attaches
 the exact selected-menu, venue, and regional-configuration source citations.
-It does not yet provide semantic document-chunk retrieval.
+Phase 10 adds deterministic, source-backed baseline pricing: an explicitly
+mapped menu price is multiplied by the extracted guest count and declared venue
+fees are added. Missing mappings, unsupported price units, and invalid source
+data stop for clarification rather than produce a guessed figure. It does not
+yet provide semantic document-chunk retrieval or complete regional pricing
+rules such as tax, service charge, staffing, and rounding.
 A live extraction call requires an administrator-configured provider and pinned
-model ID; tests never call an LLM. The product does not yet contain pricing,
-proposal generation,
-customer enquiry routes, or installer automation.
+model ID; tests never call an LLM. The product does not yet contain proposal
+generation, customer enquiry routes, or installer automation.
 
 The product will be delivered as a dedicated, isolated deployment for each
 client. The future customer intake channel is called the **Catering Enquiry
